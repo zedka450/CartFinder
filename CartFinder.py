@@ -15,28 +15,34 @@ class PathFinder:
         self.Propag()
 
     def Propag(self):
+        import copy
         directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
-        
+    
+        new_map = copy.deepcopy(self.map)
+    
         for r in range(self.lines):
             for c in range(self.cols):
                 val = self.map[r][c]
+            
                 if val in ["1", "2", "3", "4"]:
                     danger_level = int(val)
-                    
+                
                     for d in directions:
                         nr, nc = r + d[0], c + d[1]
-                        
+                    
                         if 0 <= nr < self.lines and 0 <= nc < self.cols:
                             neighbor_val = self.map[nr][nc]
-                            
+                        
                             if neighbor_val != "-0":
                                 current_num = int(neighbor_val)
                                 new_num = current_num + danger_level
-                                
+                            
                                 if new_num > 5:
-                                    self.map[nr][nc] = "5"
+                                    new_map[nr][nc] = "5"
                                 else:
-                                    self.map[nr][nc] = str(new_num)
+                                    new_map[nr][nc] = str(new_num)
+                                
+        self.map = new_map
 
     def Find(self, pR, pS):
         goods = []
@@ -48,19 +54,17 @@ class PathFinder:
         def Path(start_pos, target_pos):
             attempts = {}
             solutions = []
-            marked = [start_pos]
             finded = False
             
-            attempts["attempt0"] = {"path": [start_pos], "pos": start_pos, "score": 0}
-
-            for i in range(151):
-                if i == 150:
-                    if not finded:
-                        return None, None
-                    else:
-                        best = max(solutions, key=lambda x: x[1])
-                        return best[0], best[1]
+            best_scores_for_case = {tuple(start_pos): 0}
             
+            attempts["attempt0"] = {
+                "path": [start_pos], 
+                "pos": start_pos, 
+                "score": 0
+            }
+
+            for i in range(2000):
                 current_attempt = f"attempt{i}"
                 if current_attempt not in attempts:
                     break
@@ -78,26 +82,27 @@ class PathFinder:
             
                 for d in directions:
                     next_pos = [pos[0] + d[0], pos[1] + d[1]]
+                    next_pos_tuple = tuple(next_pos)
                 
-                    if next_pos in goods and next_pos not in marked:
-                        marked.append(next_pos)
-
+                    if next_pos in goods:
                         danger_cost = int(self.map[next_pos[0]][next_pos[1]]) * pS
                         step_cost = 1 * pR
                         next_score = score - (danger_cost + step_cost)
 
-                        next_attempt_id = f"attempt{len(attempts)}"
-                        attempts[next_attempt_id] = {
-                            "path": path + [next_pos],
-                            "pos": next_pos,
-                            "score": next_score
-                        }
+                        if next_pos_tuple not in best_scores_for_case or next_score > best_scores_for_case[next_pos_tuple]:
+                            best_scores_for_case[next_pos_tuple] = next_score
+                            
+                            next_attempt_id = f"attempt{len(attempts)}"
+                            attempts[next_attempt_id] = {
+                                "path": path + [next_pos],
+                                "pos": next_pos,
+                                "score": next_score
+                            }
             
             if finded:
                 best = max(solutions, key=lambda x: x[1])
                 return best[0], best[1]
             return None, None
-
         global_path = []
         total_score = 0
         current_start = self.a
