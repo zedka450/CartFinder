@@ -1,5 +1,3 @@
-import time
-
 class PathFinder:
     def __init__(self, map_data, a, additionals, b):
         print("Initialized")
